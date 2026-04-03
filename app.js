@@ -983,7 +983,7 @@ function openDrawer(sku) {
       <div class="intel-signal-body">
         <span class="intel-signal-title">Competitor Signal (Weight: 0.80)</span>
         <span class="intel-signal-text">Amazon dropped to ${sku.amz} AED. Best competitor at ${sku.comp} AED.</span>
-        <span class="intel-signal-result">→ Action: Match competitor → AI Price = ${sku.aiPrice} AED</span>
+        <span class="intel-signal-result">→ Action: ${sku.strat === 'profit' ? 'Maximize Margin (Profit Harvest curve)' : (sku.strat === 'flush' ? 'Aggressive Flush to Cost' : 'Match lowest competitor')} → AI Price = ${sku.aiPrice} AED</span>
       </div>
     </div>
     <div class="intel-signal weight-low">
@@ -1048,8 +1048,18 @@ function saveOverride() {
   const sku = SKU_DATA[STATE.openSkuIndex];
   if (!sku) return;
   const newPrice = parseInt(document.getElementById('override-slider').value);
+  
+  // Persist values globally explicitly tracking manual overrides
   STATE.overrideValues[sku.id] = newPrice;
+  sku.aiPrice = newPrice;
+  sku.strat = 'none'; // Reverts visually to indicate manual control
+  
   showToast(`✅ Manual price AED ${newPrice.toLocaleString()} saved for ${sku.product}`);
+  closeDrawer();
+  
+  // Refresh canvas and SKU list tables globally
+  renderSKUTable(SKU_DATA);
+  renderCanvasSkus();
 }
 
 // =====================================================
