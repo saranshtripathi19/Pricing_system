@@ -124,6 +124,18 @@ const ALERTS_DATA = [
     primaryAction: 'Apply Profit Harvest',
     secondaryAction: 'View Analysis',
     screen: 'canvas',
+  },
+  {
+    id: 'floor-1',
+    type: 'floor',
+    badge: 'Floor Breach ⚠️',
+    badgeClass: 'badge-warning',
+    title: 'Home Category: Clearance Margin Warning',
+    body: 'Clearance inventory rules are pushing pricing below 5% gross margin. Manual sign-off required to continue.',
+    time: '45 min ago',
+    primaryAction: 'Approve Threshold',
+    secondaryAction: 'View Analysis',
+    screen: 'dashboard',
   }
 ];
 
@@ -1079,12 +1091,18 @@ window.showAnalysis = function(alertId) {
     document.getElementById('analysis-skus').textContent = '14';
     document.getElementById('analysis-loss').textContent = 'AED 42,000 Risk';
     document.getElementById('analysis-loss').className = 'amet-val danger';
-  } else {
+  } else if (alert.type === 'elasticity') {
     document.getElementById('analysis-title').textContent = 'Elasticity Opportunity';
     document.getElementById('analysis-root-cause').innerHTML = `<strong>Insight:</strong> ${alert.body}<br><br>Consumer price indifference detected. Historical regression matches "Profit Harvest" parameter perfectly.`;
     document.getElementById('analysis-skus').textContent = '891';
     document.getElementById('analysis-loss').textContent = '+AED 1.2M Lift';
     document.getElementById('analysis-loss').className = 'amet-val success';
+  } else if (alert.type === 'floor') {
+    document.getElementById('analysis-title').textContent = 'Margin Floor Breach';
+    document.getElementById('analysis-root-cause').innerHTML = `<strong>Insight:</strong> ${alert.body}<br><br>The "Inventory Flush" strategy applied yesterday has successfully increased volume, but unit economics have breached the 5% minimum profitability threshold set for the Home category.`;
+    document.getElementById('analysis-skus').textContent = '112';
+    document.getElementById('analysis-loss').textContent = '-2.1% GMV Impact';
+    document.getElementById('analysis-loss').className = 'amet-val warning';
   }
 }
 
