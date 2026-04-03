@@ -974,14 +974,15 @@ function openDrawer(sku) {
   
   const cogs = sku.ourPrice * 0.7;
   
-  const drawerHeader = document.getElementById('drawer-sku-header');
-  drawerHeader.innerHTML = `
-    <h3 class="sku-drawer-title">${sku.product}</h3>
-    <span class="sku-drawer-id" style="display:flex; justify-content:space-between; width:100%; margin-top:5px;">
+  document.getElementById('drawer-sku-name').textContent = sku.product;
+  document.getElementById('drawer-sku-id').innerHTML = `
+    <div style="display:flex; justify-content:space-between; width:100%; margin-top:5px; font-weight:normal; font-size:12px;">
       <span>ID: ${sku.id} | Category: ${sku.cat}</span>
-      <span><strong>Live:</strong> AED ${sku.ourPrice.toLocaleString()} | <strong>COGS:</strong> AED ${cogs.toLocaleString()}</span>
-    </span>
-  `;const doc = Math.floor(sku.inventory / 15) + 1;
+      <span><strong>Live:</strong> AED ${sku.ourPrice.toLocaleString()} | <strong>Est. Cost:</strong> AED ${cogs.toLocaleString()}</span>
+    </div>
+  `;
+  
+  const doc = Math.floor(sku.inventory / 15) + 1;
   document.getElementById('drawer-inv-text').textContent = `Available Units: ${sku.inventory} | Days of Cover: ${doc}`;
   
   const invBox = document.getElementById('drawer-inv-box');
