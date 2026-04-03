@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Noon SPO — Strategic Pricing Optimizer</title>
+  <meta name="description" content="Internal decision-making engine for Noon Category Managers. Set high-level business goals and let AI translate them into optimal SKU prices." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- SIDEBAR NAV -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <span class="logo-n">N</span>
+      </div>
+      <span class="logo-text">noon <span>SPO</span></span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" id="nav-dashboard" data-screen="dashboard" onclick="navigateTo('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-item" id="nav-canvas" data-screen="canvas" onclick="navigateTo('canvas')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <span>Policy Canvas</span>
+      </button>
+      <button class="nav-item" id="nav-simulator" data-screen="simulator" onclick="navigateTo('simulator')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+        <span>Scenario Simulator</span>
+      </button>
+      <button class="nav-item" id="nav-sku" data-screen="sku" onclick="navigateTo('sku')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <span>SKU Deep-Dive</span>
+      </button>
+      <button class="nav-item" id="nav-alerts" data-screen="alerts" onclick="navigateTo('alerts')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span>Alert Hub</span>
+        <span id="alert-badge" class="alert-badge">3</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-avatar">SR</div>
+      <div class="user-info">
+        <span class="user-name">Saransh</span>
+        <span class="user-role">Category Manager</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content" id="main-content">
+
+    <!-- ===== SCREEN 1: DASHBOARD ===== -->
+    <section class="screen active" id="screen-dashboard">
+      <div class="screen-header">
+        <div>
+          <h1 class="screen-title">Executive Command Center</h1>
+          <p class="screen-subtitle">Real-time portfolio performance — Last updated <span id="last-update-time"></span></p>
+        </div>
+        <div class="header-controls">
+          <select class="filter-select" id="category-filter" onchange="updateDashboard()">
+            <option value="all">All Categories</option>
+            <option value="electronics">Electronics</option>
+            <option value="fmcg">FMCG</option>
+            <option value="home">Home & Living</option>
+          </select>
+          <div class="live-indicator">
+            <span class="live-dot"></span>
+            <span>LIVE</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- APP NAVIGATION ONBOARDING -->
+      <div class="dashboard-guide">
+        <h3 class="guide-heading">Welcome to SPO: How it Works</h3>
+        <div class="guide-cards">
+          <div class="guide-card">
+            <div class="gc-icon">📊</div>
+            <div class="gc-info">
+              <span class="gc-title">1. Dashboard</span>
+              <span class="gc-desc">Monitor Real-time KPIs</span>
+            </div>
+          </div>
+          <div class="guide-card">
+            <div class="gc-icon">⚗️</div>
+            <div class="gc-info">
+              <span class="gc-title">2. Simulator</span>
+              <span class="gc-desc">Safety test "What-If" scenarios</span>
+            </div>
+          </div>
+          <div class="guide-card">
+            <div class="gc-icon">🎯</div>
+            <div class="gc-info">
+              <span class="gc-title">3. Policy Canvas</span>
+              <span class="gc-desc">Drag & drop strategy application</span>
+            </div>
+          </div>
+          <div class="guide-card">
+            <div class="gc-icon">🔍</div>
+            <div class="gc-info">
+              <span class="gc-title">4. SKU Deep-Dive</span>
+              <span class="gc-desc">Inspect granular AI decisions</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI TILES -->
+      <div class="kpi-grid">
+        <div class="kpi-tile" id="kpi-gmv">
+          <div class="kpi-header">
+            <span class="kpi-label">GMV vs. Target</span>
+            <span class="kpi-badge badge-neutral">This Month</span>
+          </div>
+          <div class="kpi-value" id="kpi-gmv-value">82.4M <span class="kpi-currency">AED</span></div>
+          <div class="kpi-target">Target: 100M AED</div>
+          <div class="kpi-progress-bar">
+            <div class="kpi-progress-fill" id="gmv-progress" style="width: 82%"></div>
+          </div>
+          <div class="kpi-footer">
+            <span class="kpi-percent">82%</span>
+            <span class="kpi-delta positive">↑ 3.2% vs last month</span>
+          </div>
+        </div>
+
+        <div class="kpi-tile" id="kpi-margin">
+          <div class="kpi-header">
+            <span class="kpi-label">Avg. Portfolio Margin</span>
+            <span class="kpi-badge badge-danger">Below Target</span>
+          </div>
+          <div class="kpi-value danger" id="kpi-margin-value">12.4<span class="kpi-unit">%</span></div>
+          <div class="kpi-target">Target: 15.0%</div>
+          <div class="kpi-progress-bar">
+            <div class="kpi-progress-fill danger" id="margin-progress" style="width: 82.6%"></div>
+          </div>
+          <div class="kpi-footer">
+            <span class="kpi-percent danger">−2.6pp miss</span>
+            <span class="kpi-delta negative">↓ 0.8pp vs last month</span>
+          </div>
+        </div>
+
+        <div class="kpi-tile" id="kpi-buybox">
+          <div class="kpi-header">
+            <span class="kpi-label">Buy Box Win Rate</span>
+            <span class="kpi-badge badge-success">Healthy</span>
+          </div>
+          <div class="kpi-value" id="kpi-buybox-value">74<span class="kpi-unit">%</span></div>
+          <div class="kpi-target">Target: 80%</div>
+          <div class="kpi-progress-bar">
+            <div class="kpi-progress-fill" id="buybox-progress" style="width: 74%"></div>
+          </div>
+          <div class="kpi-footer">
+            <span class="kpi-percent">74%</span>
+            <span class="kpi-delta positive">↑ 1.4pp vs last week</span>
+          </div>
+        </div>
+
+        <div class="kpi-tile" id="kpi-skus">
+          <div class="kpi-header">
+            <span class="kpi-label">Active Pricing Rules</span>
+            <span class="kpi-badge badge-info">AI Managed</span>
+          </div>
+          <div class="kpi-value" id="kpi-skus-value">1,248 <span class="kpi-unit">SKUs</span></div>
+          <div class="kpi-target">Optimized by AI Engine</div>
+          <div class="kpi-progress-bar">
+            <div class="kpi-progress-fill info" style="width: 91%"></div>
+          </div>
+          <div class="kpi-footer">
+            <span class="kpi-percent">91% coverage</span>
+            <span class="kpi-delta positive">↑ 24 new SKUs today</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MARKET PULSE CHART -->
+      <div class="chart-section">
+        <div class="chart-card main-chart-card">
+          <div class="chart-card-header">
+            <div>
+              <h2 class="chart-card-title">Market Pulse</h2>
+              <select id="pulse-scope" class="search-input" style="height: 28px; width: auto; font-size: 11px; margin-top: 5px; padding-left: 10px;" onchange="updatePulseChart()">
+                <option value="electronics">Category: Electronics</option>
+                <option value="fmcg">Category: FMCG</option>
+                <option value="home">Category: Home</option>
+                <option value="sku-N12345678A">SKU: iPhone 15 Pro Max</option>
+              </select>
+            </div>
+            <div class="chart-legend">
+              <span class="legend-item"><span class="legend-dot" style="background:#FFE000"></span>Avg. Price (AED)</span>
+              <span class="legend-item"><span class="legend-dot" style="background:#6366f1"></span>Order Volume</span>
+            </div>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="pulseChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card side-chart-card">
+          <div class="chart-card-header">
+            <div>
+              <h2 class="chart-card-title">Strategy Mix</h2>
+              <p class="chart-card-subtitle">SKUs by active strategy profile</p>
+            </div>
+          </div>
+          <div class="chart-wrapper donut-wrapper">
+            <canvas id="strategyDonut"></canvas>
+          </div>
+          <div class="donut-legend" id="donut-legend"></div>
+        </div>
+      </div>
+
+      <!-- INSTANT INSIGHTS -->
+      <div class="insights-row">
+        <div class="insight-card critical">
+          <div class="insight-icon">🔥</div>
+          <div class="insight-body">
+            <span class="insight-title">Margin Alert</span>
+            <span class="insight-text">Electronics margin at 8.2% — 6.8pp below target. 14 SKUs need review.</span>
+          </div>
+          <button class="insight-cta" onclick="navigateTo('sku')">View SKUs →</button>
+        </div>
+        <div class="insight-card opportunity">
+          <div class="insight-icon">💡</div>
+          <div class="insight-body">
+            <span class="insight-title">Elasticity Opportunity</span>
+            <span class="insight-text">Perfumes show 0% volume drop after last 5% price increase. Potential: +1.2M AED.</span>
+          </div>
+          <button class="insight-cta" onclick="navigateTo('alerts')">See Nudge →</button>
+        </div>
+        <div class="insight-card warning">
+          <div class="insight-icon">⚡</div>
+          <div class="insight-body">
+            <span class="insight-title">Price War Detected</span>
+            <span class="insight-text">iPhone 15: 4 competitor drops in 1hr. Circuit breaker ACTIVE.</span>
+          </div>
+          <button class="insight-cta" onclick="navigateTo('alerts')">Investigate →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SCREEN 2: POLICY CANVAS ===== -->
+    <section class="screen" id="screen-canvas">
+      <div class="screen-header">
+        <div>
+          <h1 class="screen-title">Policy Canvas</h1>
+          <p class="screen-subtitle">Drag a strategy chip onto a category card to apply it</p>
+        </div>
+        <div class="header-controls">
+          <button class="btn-primary" onclick="applyAllStrategies()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            Apply All Active
+          </button>
+        </div>
+      </div>
+
+      <!-- CANVAS TOGGLE -->
+      <div class="canvas-toggle-wrap">
+        <span class="toggle-label">Apply policies by:</span>
+        <div class="canvas-toggle">
+          <button class="toggle-btn active" id="toggle-category" onclick="setCanvasMode('category')">Category Level</button>
+          <button class="toggle-btn" id="toggle-sku" onclick="setCanvasMode('sku')">SKU Level</button>
+        </div>
+      </div>
+
+      <!-- STRATEGY CHIPS DOCK -->
+      <div class="chips-dock">
+        <p class="chips-label">Strategy Profiles — Drag onto a category:</p>
+        <div class="chips-row">
+          <div class="strategy-chip chip-aggressive" draggable="true" data-strategy="aggressive" id="chip-aggressive"
+               ondragstart="onChipDragStart(event)" ondragend="onChipDragEnd(event)">
+            <span class="chip-icon">🚀</span>
+            <div class="chip-info">
+              <span class="chip-name">Aggressive Growth</span>
+              <span class="chip-algo">Matches lowest competitor to quickly win volume</span>
+            </div>
+            <div class="tooltip-icon">ℹ️
+              <span class="tooltip-text">Algorithm: k-NN.<br>Target: Lowest reputable competitor minus 1 AED. Designed to maximize volume and Buy Box win rate, sacrificing some margin.</span>
+            </div>
+          </div>
+          <div class="strategy-chip chip-profit" draggable="true" data-strategy="profit" id="chip-profit"
+               ondragstart="onChipDragStart(event)" ondragend="onChipDragEnd(event)">
+            <span class="chip-icon">📈</span>
+            <div class="chip-info">
+              <span class="chip-name">Profit Harvest</span>
+              <span class="chip-algo">Uses elasticity to maximize total profit margin</span>
+            </div>
+            <div class="tooltip-icon">ℹ️
+              <span class="tooltip-text">Algorithm: Log-Log Regression.<br>Identifies the price point where (Price - Cost) x Projected Volume is highest. Designed for categories where consumers ignore small price hikes.</span>
+            </div>
+          </div>
+          <div class="strategy-chip chip-flush" draggable="true" data-strategy="flush" id="chip-flush"
+               ondragstart="onChipDragStart(event)" ondragend="onChipDragEnd(event)">
+            <span class="chip-icon">🌊</span>
+            <div class="chip-info">
+              <span class="chip-name">Inventory Flush</span>
+              <span class="chip-algo">Systematically drops price to clear excess stock</span>
+            </div>
+            <div class="tooltip-icon">ℹ️
+              <span class="tooltip-text">Algorithm: PID Controller.<br>Gradually drops price by 2% every 12 hours until sales velocity increases sufficiently. For items with Days-of-Cover > 30.</span>
+            </div>
+          </div>
+          <div class="strategy-chip chip-defensive" draggable="true" data-strategy="defensive" id="chip-defensive"
+               ondragstart="onChipDragStart(event)" ondragend="onChipDragEnd(event)">
+            <span class="chip-icon">🛡️</span>
+            <div class="chip-info">
+              <span class="chip-name">Market Defensive</span>
+              <span class="chip-algo">Matches the Buy Box price without undercutting</span>
+            </div>
+            <div class="tooltip-icon">ℹ️
+              <span class="tooltip-text">Algorithm: Simple Match.<br>Looks at the current winning Buy Box price and matches it exactly. Protects market share without triggering a price war.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CATEGORY VIEW WRAPPER -->
+      <div id="canvas-view-category" class="canvas-view active">
+        <!-- CATEGORY CARDS -->
+        <div class="category-cards-grid">
+
+        <div class="category-card" id="card-electronics"
+             ondragover="onCardDragOver(event)" ondragleave="onCardDragLeave(event)" ondrop="onCardDrop(event, 'electronics')">
+          <div class="card-header-row">
+            <div class="card-icon electronics-icon">📱</div>
+            <div class="card-category-info">
+              <h3 class="card-category-name">Electronics</h3>
+              <span class="card-sku-count">342 SKUs</span>
+            </div>
+            <span class="card-strategy-tag" id="tag-electronics">No Strategy</span>
+          </div>
+          <div class="card-metrics">
+            <div class="card-metric">
+              <span class="metric-label">Stock Value 
+                <div class="tooltip-icon inline-icon">ℹ️<span class="tooltip-text">Total value of inventory currently held in local fulfillment centers.</span></div>
+              </span>
+              <span class="metric-value">AED 12.4M</span>
+            </div>
+            <div class="card-metric">
+              <span class="metric-label">Win Rate 
+                <div class="tooltip-icon inline-icon">ℹ️<span class="tooltip-text">Percentage of time Noon is winning the Buy Box for SKUs in this category.</span></div>
+              </span>
+              <span class="metric-value">68%</span>
+            </div>
+            <div class="card-metric">
+              <span class="metric-label">Avg. Margin 
+                <div class="tooltip-icon inline-icon">ℹ️<span class="tooltip-text">Average gross profit margin across this category. Anything below 10% is highlighted in red.</span></div>
+              </span>
+              <span class="metric-value danger">8.2%</span>
+            </div>
+          </div>
+          <div class="card-drop-zone" id="drop-electronics">
+            <span class="drop-hint">Drop strategy here</span>
+          </div>
+          <div class="card-projection hidden" id="proj-electronics">
+            <div class="projection-row">
+              <span class="proj-label">Est. Volume Change</span>
+              <span class="proj-value positive" id="proj-vol-electronics">—</span>
+            </div>
+            <div class="projection-row">
+              <span class="proj-label">Est. Margin Impact</span>
+              <span class="proj-value" id="proj-margin-electronics">—</span>
+            </div>
+            <div class="projection-row">
+              <span class="proj-label">Algorithm</span>
+              <span class="proj-value" id="proj-algo-electronics">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="category-card" id="card-fmcg"
+             ondragover="onCardDragOver(event)" ondragleave="onCardDragLeave(event)" ondrop="onCardDrop(event, 'fmcg')">
+          <div class="card-header-row">
+            <div class="card-icon fmcg-icon">🧴</div>
+            <div class="card-category-info">
+              <h3 class="card-category-name">FMCG</h3>
+              <span class="card-sku-count">891 SKUs</span>
+            </div>
+            <span class="card-strategy-tag" id="tag-fmcg">No Strategy</span>
+          </div>
+          <div class="card-metrics">
+            <div class="card-metric">
+              <span class="metric-label">Stock Value 
+                <div class="tooltip-icon inline-icon">ℹ️<span class="tooltip-text">Total value of inventory currently held in local fulfillment centers.</span></div>
+              </span>
+              <span class="metric-value">AED 3.1M</span>
+            </div>
+            <div class="card-metric">
+              <span class="metric-label">Win Rate 
+                <div class="tooltip-icon inline-icon">ℹ️<span class="tooltip-text">Percentage of time Noon is winning the Buy Box for SKUs in this category.</span></div>
+              </span>
+              <span class="metric-value">81%</span>
+            </div>
+            <div class="card-metric">
+              <span class="metric-label">Avg. Margin 
+                <div class="tooltip-icon inline-icon">ℹ️<span class="tooltip-text">Average gross profit margin across this category. Anything below 10% is highlighted in red.</span></div>
+              </span>
+              <span class="metric-value">18.5%</span>
+            </div>
+          </div>
+          <div class="card-drop-zone" id="drop-fmcg">
+            <span class="drop-hint">Drop strategy here</span>
+          </div>
+          <div class="card-projection hidden" id="proj-fmcg">
+            <div class="projection-row">
+              <span class="proj-label">Est. Volume Change</span>
+              <span class="proj-value positive" id="proj-vol-fmcg">—</span>
+            </div>
+            <div class="projection-row">
+              <span class="proj-label">Est. Margin Impact</span>
+              <span class="proj-value" id="proj-margin-fmcg">—</span>
+            </div>
+            <div class="projection-row">
+              <span class="proj-label">Algorithm</span>
+              <span class="proj-value" id="proj-algo-fmcg">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="category-card" id="card-home"
+             ondragover="onCardDragOver(event)" ondragleave="onCardDragLeave(event)" ondrop="onCardDrop(event, 'home')">
+          <div class="card-header-row">
+            <div class="card-icon home-icon">🏠</div>
+            <div class="card-category-info">
+              <h3 class="card-category-name">Home & Living</h3>
+              <span class="card-sku-count">215 SKUs</span>
+            </div>
+            <span class="card-strategy-tag" id="tag-home">No Strategy</span>
+          </div>
+          <div class="card-metrics">
+            <div class="card-metric">
+              <span class="metric-label">Stock Value 
+                <div class="tooltip-icon inline-icon">ℹ️<span class="tooltip-text">Total value of inventory currently held in local fulfillment centers.</span></div>
+              </span>
+              <span class="metric-value">AED 1.8M</span>
+            </div>
+            <div class="card-metric">
+              <span class="metric-label">Win Rate 
+                <div class="tooltip-icon inline-icon">ℹ️<span class="tooltip-text">Percentage of time Noon is winning the Buy Box for SKUs in this category.</span></div>
+              </span>
+              <span class="metric-value">72%</span>
+            </div>
+            <div class="card-metric">
+              <span class="metric-label">Avg. Margin 
+                <div class="tooltip-icon inline-icon">ℹ️<span class="tooltip-text">Average gross profit margin across this category. Anything below 10% is highlighted in red.</span></div>
+              </span>
+              <span class="metric-value">21.1%</span>
+            </div>
+          </div>
+          <div class="card-drop-zone" id="drop-home">
+            <span class="drop-hint">Drop strategy here</span>
+          </div>
+          <div class="card-projection hidden" id="proj-home">
+            <div class="projection-row">
+              <span class="proj-label">Est. Volume Change</span>
+              <span class="proj-value positive" id="proj-vol-home">—</span>
+            </div>
+            <div class="projection-row">
+              <span class="proj-label">Est. Margin Impact</span>
+              <span class="proj-value" id="proj-margin-home">—</span>
+            </div>
+            <div class="projection-row">
+              <span class="proj-label">Algorithm</span>
+              <span class="proj-value" id="proj-algo-home">—</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      </div> <!-- END CATEGORY VIEW WRAPPER -->
+      
+      <!-- SKU VIEW WRAPPER -->
+      <div id="canvas-view-sku" class="canvas-view">
+        <div class="sku-table-wrapper">
+          <table class="sku-table">
+            <thead>
+              <tr>
+                <th>SKU ID</th>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Current Price</th>
+                <th>Current Strategy</th>
+                <th>Apply Strategy (Drop Here)</th>
+              </tr>
+            </thead>
+            <tbody id="canvas-sku-list">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div> <!-- END SKU VIEW WRAPPER -->
+    </section>
+
+    <!-- ===== SCREEN X: SCENARIO SIMULATOR ===== -->
+    <section class="screen" id="screen-simulator">
+      <div class="screen-header">
+        <div>
+          <h1 class="screen-title">Scenario Simulator</h1>
+          <p class="screen-subtitle">Adjust market parameters to safely simulate impact on your portfolio KPIs</p>
+        </div>
+      </div>
+
+      <!-- STRATEGY LAB (MOVED FROM CANVAS) -->
+      <div class="strategy-lab">
+        <div class="lab-header">
+          <h2 class="lab-title">⚗️ Simulation Sandbox</h2>
+          <p class="lab-subtitle">Test different market stances to see what happens to overall Gross Merchandise Value (GMV) and Margin.</p>
+          <div class="simulator-scope">
+            <label>Simulate Scope:</label>
+            <select class="filter-select" id="sim-scope" onchange="onSimScopeChange()">
+              <option value="portfolio">Entire Portfolio</option>
+              <option value="electronics">Category: Electronics</option>
+              <option value="fmcg">Category: FMCG</option>
+              <option value="N12345678A">SKU: iPhone 15 Pro</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="simulator-layout">
+          <div class="lab-controls">
+            <div class="lab-control">
+              <label class="lab-label">Price Aggressiveness <span id="aggr-display" class="lab-val">50%</span></label>
+              <p class="lab-helper-text">High aggressiveness matches lower competitors, decreasing price increasing volume.</p>
+              <input type="range" class="lab-slider" id="slider-aggr" min="0" max="100" value="50" oninput="onLabSlider()">
+            </div>
+          </div>
+          
+          <div class="simulator-matrix">
+            <h3 class="matrix-title">Projected Impact Matrix</h3>
+            <div class="lab-projections">
+              <div class="lab-proj-col" id="proj-col-1">
+                <span class="lab-proj-label" id="plabel-1">Projected GMV</span>
+                <div class="lab-comparison">
+                  <span class="lab-proj-old" id="pold-1">82.4M</span>
+                  <span class="lab-proj-arrow">→</span>
+                  <span class="lab-proj-value" id="pval-1">AED 82.4M</span>
+                </div>
+              </div>
+              <div class="lab-proj-col" id="proj-col-2">
+                <span class="lab-proj-label" id="plabel-2">Projected Margin</span>
+                <div class="lab-comparison">
+                  <span class="lab-proj-old" id="pold-2">12.4%</span>
+                  <span class="lab-proj-arrow">→</span>
+                  <span class="lab-proj-value" id="pval-2">12.4%</span>
+                </div>
+              </div>
+              <div class="lab-proj-col" id="proj-col-3">
+                <span class="lab-proj-label" id="plabel-3">Projected Win Rate</span>
+                <div class="lab-comparison">
+                  <span class="lab-proj-old" id="pold-3">74%</span>
+                  <span class="lab-proj-arrow">→</span>
+                  <span class="lab-proj-value" id="pval-3">74%</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="simulator-action">
+               <button class="btn-primary" onclick="applySimulationToCanvas()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                Use Best Matching Strategies
+               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SCREEN 3: SKU DEEP-DIVE ===== -->
+    <section class="screen" id="screen-sku">
+      <div class="screen-header">
+        <div>
+          <h1 class="screen-title">SKU Deep-Dive</h1>
+          <p class="screen-subtitle">Explainable AI pricing decisions — click any row to inspect</p>
+        </div>
+        <div class="header-controls">
+          <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" class="search-input" id="sku-search" placeholder="Search SKU, product, category..." oninput="filterSKUs()" />
+          </div>
+          <select class="filter-select" id="sku-cat-filter" onchange="filterSKUs()">
+            <option value="all">All Categories</option>
+            <option value="Electronics">Electronics</option>
+            <option value="FMCG">FMCG</option>
+            <option value="Home">Home & Living</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sku-table-wrapper">
+        <table class="sku-table" id="sku-table">
+          <thead>
+            <tr>
+              <th>SKU ID</th>
+              <th>Product</th>
+              <th>Category</th>
+              <th>Our Price</th>
+              <th>Amazon</th>
+              <th>Best Comp.</th>
+              <th>AI Price</th>
+              <th>Margin</th>
+              <th>Inventory</th>
+              <th>Strategy</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="sku-tbody">
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== SCREEN 4: ALERT HUB ===== -->
+    <section class="screen" id="screen-alerts">
+      <div class="screen-header">
+        <div>
+          <h1 class="screen-title">Intelligence & Alert Hub</h1>
+          <p class="screen-subtitle">AI-generated nudges and circuit breaker events</p>
+        </div>
+        <div class="header-controls">
+          <button class="btn-ghost" onclick="markAllRead()">Mark all read</button>
+        </div>
+      </div>
+
+      <div class="alerts-layout">
+        <div class="alerts-feed" id="alerts-feed">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="alerts-sidebar">
+          <div class="alerts-stat-card">
+            <div class="alerts-stat-value danger">1</div>
+            <div class="alerts-stat-label">Circuit Breakers Active</div>
+          </div>
+          <div class="alerts-stat-card">
+            <div class="alerts-stat-value success">2</div>
+            <div class="alerts-stat-label">Opportunities Found</div>
+          </div>
+          <div class="alerts-stat-card">
+                <div class="alerts-stat-value warning">1</div>
+            <div class="alerts-stat-label">Floor Breaches</div>
+          </div>
+          <div class="resolution-guide" id="alert-analysis-panel" style="display: none; border: 1.5px solid var(--border-color); border-top: 3px solid var(--info);">
+            <h3 class="guide-title" style="margin-bottom: 15px;">System Analysis Log</h3>
+            <div class="analysis-empty-state" id="analysis-empty" style="color: var(--text-muted); font-size: 13px; font-style: italic;">
+              Select an alert to view detailed root cause analysis.
+            </div>
+            <div id="analysis-content" style="display: none;">
+              <h3 class="analysis-title" id="analysis-title" style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:10px;"></h3>
+              <div class="analysis-section" style="margin-bottom:15px;">
+                <span class="analysis-label" style="font-size:11px; text-transform:uppercase; color:var(--text-muted);">Root Cause Hypothesis</span>
+                <p class="analysis-text" id="analysis-root-cause" style="font-size:13px; color:var(--text-secondary); line-height:1.4; margin-top:4px;"></p>
+              </div>
+              <div class="analysis-section">
+                <span class="analysis-label" style="font-size:11px; text-transform:uppercase; color:var(--text-muted);">Impact Radius</span>
+                <div class="analysis-metrics" style="display:flex; gap:15px; margin-top:5px;">
+                  <div class="analysis-metric">
+                    <span class="amet-label" style="font-size:10px; color:var(--text-muted);">SKUs</span><br>
+                    <span class="amet-val" id="analysis-skus" style="font-size:14px; font-weight:700;"></span>
+                  </div>
+                  <div class="analysis-metric">
+                    <span class="amet-label" style="font-size:10px; color:var(--text-muted);">Est. Impact</span><br>
+                    <span class="amet-val" id="analysis-loss" style="font-size:14px; font-weight:700;"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- CONFIRMATION MODAL -->
+  <div class="modal-overlay" id="confirm-modal-overlay"></div>
+  <div class="confirm-modal" id="confirm-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Confirm Strategy Application</h2>
+      <button class="modal-close" onclick="closeConfirmationModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-desc" id="confirm-modal-desc">You are about to apply a new pricing strategy.</p>
+      
+      <div class="impact-summary-box">
+        <h3 class="impact-title">Expected Portfolio Impact:</h3>
+        <div class="impact-grid" id="confirm-modal-impacts">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <div class="modal-warning">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m10.29 3.86-7.5 13.06A2 2 0 0 0 4.54 20h14.92a2 2 0 0 0 1.75-2.9l-7.5-13.06a2 2 0 0 0-3.42-.18z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>This will push updated AI prices to the live environment immediately.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeConfirmationModal()">Cancel</button>
+      <button class="btn-primary" id="confirm-btn">Confirm & Apply</button>
+    </div>
+  </div>
+
+  <!-- ===== SKU SIDE DRAWER ===== -->
+  <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+  <aside class="sku-drawer" id="sku-drawer">
+    <div class="drawer-header">
+      <div>
+        <h2 class="drawer-title" id="drawer-sku-name">Product Name</h2>
+        <span class="drawer-sku-id" id="drawer-sku-id">SKU #00000</span>
+      </div>
+      <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="benchmark-section">
+        <h3 class="section-label">Price Benchmarking — Last 7 Days</h3>
+        <div class="benchmark-chart-wrapper">
+          <canvas id="benchmarkChart"></canvas>
+        </div>
+      </div>
+
+      <div class="decision-intel">
+        <h3 class="section-label">🧠 Decision Intelligence</h3>
+        <div class="intel-signals" id="intel-signals">
+          <!-- Populated by JS -->
+        </div>
+        <div class="safety-check" id="safety-check">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <div class="inventory-section" id="inventory-section">
+        <h3 class="section-label">📦 Inventory Health</h3>
+        <div class="intel-signals">
+          <div class="intel-signal" id="drawer-inv-box">
+             <div class="intel-signal-icon" id="drawer-inv-icon">📦</div>
+             <div class="intel-signal-body">
+               <span class="intel-signal-title" id="drawer-inv-title">Stock Level</span>
+               <span class="intel-signal-text" id="drawer-inv-text">Available Units: 145 | Days of Cover: 14</span>
+               <span class="intel-signal-result" id="drawer-inv-status" style="color:var(--text-primary)">Stable</span>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="override-section">
+        <h3 class="section-label">Manual Price Override</h3>
+        <div class="override-controls">
+          <div class="override-slider-row">
+            <span class="override-min" id="override-min">—</span>
+            <input type="range" class="override-slider" id="override-slider" min="0" max="10000"
+                   oninput="onOverrideSlider()" />
+            <span class="override-max" id="override-max">—</span>
+          </div>
+          <div class="override-display">
+            <span class="override-label">New Price:</span>
+            <span class="override-price" id="override-price-display">—</span>
+          </div>
+          <div class="override-actions">
+            <button class="btn-ghost" onclick="resetOverride()">Reset to AI Price</button>
+            <button class="btn-primary" onclick="saveOverride()">Save Override</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <script src="app.js"></script>
+</body>
+</html>
