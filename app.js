@@ -802,24 +802,36 @@ window.onLabSlider = function() {
 
 window.originalLabSliderCalc = function() {
   const aggr = parseInt(document.getElementById('slider-aggr').value);
-  const margin = 50;
-  const inv = 30;
-
-  STATE.labValues = { aggr, margin, inv };
   document.getElementById('aggr-display').textContent = aggr + '%';
 
-  const aggrFactor = (aggr - 50) / 50;
-  const marginFactor = (margin - 50) / 50;
-  const invFactor = (inv - 30) / 30;
+  const baseGmv = 82.4;
+  const baseMargin = 12.4;
+  const baseWin = 74;
 
-  const newGmv = 82.4 * (1 + (aggrFactor * 0.15) + (invFactor * 0.05) - (marginFactor * 0.02));
-  const newMargin = 12.4 + (marginFactor * 3.5) - (aggrFactor * 2.0) - (invFactor * 1.5);
-  const newWin = 74 + (aggrFactor * 8.0) - (marginFactor * 4.0);
+  // 1. GMV Quadratic Curve (Peaks optimally around 75% aggressiveness)
+  // Excessive aggressiveness (100) drops GMV because price cuts outweigh capped volume max.
+  // Low aggressiveness (0) drops GMV because volume collapses.
+  // y = a(x - h)^2 + k, vertex at (75, 95.0)
+  const a_gmv = -0.02016;
+  let newGmv = (a_gmv * Math.pow(aggr - 75, 2)) + 95.0;
+
+  // 2. Margin Curve (Monotonically decreases as aggressiveness drops price)
+  // aggr=50 -> 12.4%, aggr=100 -> ~2%, aggr=0 -> ~22%
+  let newMargin = baseMargin - ((aggr - 50) * 0.2);
+  
+  // 3. Buy Box Win Rate Curve (Diminishing returns approaching 100)
+  let newWin;
+  if (aggr >= 50) {
+    newWin = baseWin + ((aggr - 50) * 0.48); // Caps realistically around 98%
+  } else {
+    // Parabolic drop-off as we price premium
+    newWin = (0.0256 * Math.pow(aggr, 2)) + 10; // Floors around 10%
+  }
 
   document.getElementById('pval-1').textContent = 'AED ' + newGmv.toFixed(1) + 'M';
-  document.getElementById('pval-1').className = `lab-proj-value ${newGmv > 82.4 ? 'positive' : 'negative'}`;
+  document.getElementById('pval-1').className = `lab-proj-value ${newGmv > baseGmv ? 'positive' : 'negative'}`;
   document.getElementById('pval-2').textContent = newMargin.toFixed(1) + '%';
-  document.getElementById('pval-2').className = `lab-proj-value ${newMargin > 12.4 ? 'positive' : 'negative'}`;
+  document.getElementById('pval-2').className = `lab-proj-value ${newMargin > baseMargin ? 'positive' : 'negative'}`;
   document.getElementById('pval-3').textContent = newWin.toFixed(0) + '%';
   document.getElementById('pval-3').className = `lab-proj-value ${newWin > 74 ? 'positive' : 'negative'}`;
 }
