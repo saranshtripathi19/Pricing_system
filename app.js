@@ -814,6 +814,9 @@ window.originalLabSliderCalc = function() {
   // y = a(x - h)^2 + k, vertex at (75, 95.0)
   const a_gmv = -0.02016;
   let newGmv = (a_gmv * Math.pow(aggr - 75, 2)) + 95.0;
+  
+  // Guardrail: GMV cannot mathematically fall below zero. As price gets infinitely high, GMV floors to a minimum base demand.
+  newGmv = Math.max(12.5, newGmv);
 
   // 2. Margin Curve (Monotonically decreases as aggressiveness drops price)
   // aggr=50 -> 12.4%, aggr=100 -> ~2%, aggr=0 -> ~22%
