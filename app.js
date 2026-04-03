@@ -731,6 +731,23 @@ window.onSkuDrop = function(event, skuId) {
       dropZone.innerHTML = `<span style="color:var(--success); font-weight:700">Applied</span>`;
       
       sku.strat = chipType; 
+      
+      const cogs = sku.ourPrice * 0.7;
+      let newPrice = sku.aiPrice;
+      if (chipType === 'aggressive') {
+         newPrice = sku.comp - 1;
+      } else if (chipType === 'profit') {
+         newPrice = sku.comp + (sku.ourPrice * 0.05); // Price premium
+      } else if (chipType === 'flush') {
+         newPrice = cogs * 1.01;
+      } else if (chipType === 'defensive') {
+         newPrice = sku.comp;
+      }
+      
+      // Safety Circuit Breaker Limit (2% floor)
+      const floor = cogs * 1.02;
+      sku.aiPrice = Math.max(Math.floor(newPrice), Math.floor(floor));
+      
       renderSKUTable(SKU_DATA);
       showToast(`${strat.icon} ${strat.name} applied to ${sku.product}`);
     }
@@ -953,11 +970,18 @@ function filterSKUs() {
 }
 
 function openDrawer(sku) {
-  STATE.openSkuIndex = SKU_DATA.indexOf(sku);
-  document.getElementById('drawer-sku-name').textContent = sku.product;
-  document.getElementById('drawer-sku-id').textContent = `${sku.id} · ${sku.cat}`;
-
-  const doc = Math.floor(sku.inventory / 15) + 1;
+  STATE.openSkuIndex = SKU_DATA.findIndex(s => s.id === sku.id);
+  
+  const cogs = sku.ourPrice * 0.7;
+  
+  const drawerHeader = document.getElementById('drawer-sku-header');
+  drawerHeader.innerHTML = `
+    <h3 class="sku-drawer-title">${sku.product}</h3>
+    <span class="sku-drawer-id" style="display:flex; justify-content:space-between; width:100%; margin-top:5px;">
+      <span>ID: ${sku.id} | Category: ${sku.cat}</span>
+      <span><strong>Live:</strong> AED ${sku.ourPrice.toLocaleString()} | <strong>COGS:</strong> AED ${cogs.toLocaleString()}</span>
+    </span>
+  `;const doc = Math.floor(sku.inventory / 15) + 1;
   document.getElementById('drawer-inv-text').textContent = `Available Units: ${sku.inventory} | Days of Cover: ${doc}`;
   
   const invBox = document.getElementById('drawer-inv-box');
@@ -1001,7 +1025,6 @@ function openDrawer(sku) {
   safety.className = `safety-check ${isSafe ? 'passed' : 'failed'}`;
   safety.innerHTML = `<span>${isSafe ? '✅' : '❌'}</span><span>Safety Check: Final Price is ${sku.margin} above Margin Floor.</span>`;
 
-  const cogs = sku.ourPrice * 0.7;
   const floor = Math.floor(cogs * 1.02);
   const ceiling = Math.floor(cogs * 2.2);
   const current = STATE.overrideValues[sku.id] || sku.aiPrice;
@@ -1037,11 +1060,18 @@ function onOverrideSlider() {
 function resetOverride() {
   const sku = SKU_DATA[STATE.openSkuIndex];
   if (!sku) return;
+  
+  delete STATE.overrideValues[sku.id];
+  sku.strat = sku.originalStrat || sku.strat; // Revert visually
+  sku.aiPrice = sku.originalAiPrice || sku.aiPrice; // Hard revert math
+  
   const slider = document.getElementById('override-slider');
   slider.value = sku.aiPrice;
   document.getElementById('override-price-display').textContent = `AED ${sku.aiPrice.toLocaleString()}`;
-  delete STATE.overrideValues[sku.id];
-  showToast('🔄 Price reset to AI recommendation');
+  showToast('🔄 Price reset to algorithmic recommendation');
+  
+  renderSKUTable(SKU_DATA);
+  renderCanvasSkus();
 }
 
 function saveOverride() {
@@ -1210,13 +1240,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  console.info('[SPO] Universal Guardrail: Final_Price = MAX(Calculated_Price, COGS × 1.02)');
+  console.info('[SPO] Universal Guardrail: Final_Price = MAX(Calculated_Price, COGS x 1.02)');
   SKU_DATA.forEach(sku => {
+    // Preserve base state so we can reset overrides easily
+    sku.originalStrat = sku.strat;
+    
     const cogs = sku.ourPrice * 0.7;
     const floor = cogs * 1.02;
     const finalPrice = Math.max(sku.aiPrice, floor);
     if (finalPrice !== sku.aiPrice) {
-      console.warn(`[SPO] Guardrail applied: ${sku.product} — floor ${floor} replaces ${sku.aiPrice}`);
+      console.warn(`[SPO] Guardrail applied: ${sku.product} - floor ${floor} replaces ${sku.aiPrice}`);
     }
+    sku.aiPrice = finalPrice;
+    sku.originalAiPrice = sku.aiPrice;
   });
 });
