@@ -31,6 +31,13 @@ const BASE_KPIS = {
   gmvTarget: 100,
 };
 
+const SIM_DATA = {
+  portfolio: { gmv: 82.4, margin: 12.4, winrate: 74, label: 'Entire Portfolio' },
+  electronics: { gmv: 38.2, margin: 8.2, winrate: 68, label: 'Electronics Category' },
+  fmcg: { gmv: 28.6, margin: 18.5, winrate: 81, label: 'FMCG Category' },
+  home: { gmv: 15.6, margin: 21.1, winrate: 72, label: 'Home Category' }
+};
+
 // Strategy profile definitions with projections & algorithms
 const STRATEGIES = {
   aggressive: {
@@ -756,14 +763,16 @@ window.onSkuDrop = function(event, skuId) {
 
 function onSimScopeChange() {
   const scope = document.getElementById('sim-scope').value;
-  if(scope === 'portfolio' || scope === 'electronics' || scope === 'fmcg') {
+  if (SIM_DATA[scope]) {
+    const data = SIM_DATA[scope];
     document.getElementById('plabel-1').textContent = 'Projected GMV';
-    document.getElementById('pold-1').textContent = scope === 'portfolio' ? '82.4M' : '34.2M';
+    document.getElementById('pold-1').textContent = data.gmv + 'M';
     
     document.getElementById('plabel-2').textContent = 'Projected Margin';
-    document.getElementById('pold-2').textContent = '12.4%';
+    document.getElementById('pold-2').textContent = data.margin + '%';
     
     document.getElementById('plabel-3').textContent = 'Projected Win Rate';
+    document.getElementById('pold-3').textContent = data.winrate + '%';
   } else {
     document.getElementById('plabel-1').textContent = 'Projected Price';
     document.getElementById('pold-1').textContent = '4,299 AED';
@@ -772,6 +781,7 @@ function onSimScopeChange() {
     document.getElementById('pold-2').textContent = '42 units/day';
     
     document.getElementById('plabel-3').textContent = 'Gross Profit Impact';
+    document.getElementById('pold-3').textContent = 'AED 0';
   }
   onLabSlider();
 }
@@ -818,34 +828,33 @@ window.onLabSlider = function() {
 }
 
 window.originalLabSliderCalc = function() {
+  const scopeId = document.getElementById('sim-scope').value;
   const aggr = parseInt(document.getElementById('slider-aggr').value);
   document.getElementById('aggr-display').textContent = aggr + '%';
 
-  const baseGmv = 82.4;
-  const baseMargin = 12.4;
-  const baseWin = 74;
+  const scopeData = SIM_DATA[scopeId] || SIM_DATA.portfolio;
+  const baseGmv = scopeData.gmv;
+  const baseMargin = scopeData.margin;
+  const baseWin = scopeData.winrate;
 
   // 1. GMV Quadratic Curve (Peaks optimally around 75% aggressiveness)
-  // Excessive aggressiveness (100) drops GMV because price cuts outweigh capped volume max.
-  // Low aggressiveness (0) drops GMV because volume collapses.
-  // y = a(x - h)^2 + k, vertex at (75, 95.0)
-  const a_gmv = -0.02016;
-  let newGmv = (a_gmv * Math.pow(aggr - 75, 2)) + 95.0;
+  const a_gmv = -0.02016 * (baseGmv / 82.4); // Scale the parabola coefficient to match the base GMV
+  const peakGmv = baseGmv * 1.15; // Assume 15% peak lift
+  let newGmv = (a_gmv * Math.pow(aggr - 75, 2)) + peakGmv;
   
-  // Guardrail: GMV cannot mathematically fall below zero. As price gets infinitely high, GMV floors to a minimum base demand.
-  newGmv = Math.max(12.5, newGmv);
+  // Guardrail: GMV Floor
+  newGmv = Math.max(baseGmv * 0.15, newGmv);
 
-  // 2. Margin Curve (Monotonically decreases as aggressiveness drops price)
-  // aggr=50 -> 12.4%, aggr=100 -> ~2%, aggr=0 -> ~22%
+  // 2. Margin Curve
   let newMargin = baseMargin - ((aggr - 50) * 0.2);
   
-  // 3. Buy Box Win Rate Curve (Diminishing returns approaching 100)
+  // 3. Buy Box Win Rate Curve
   let newWin;
   if (aggr >= 50) {
-    newWin = baseWin + ((aggr - 50) * 0.48); // Caps realistically around 98%
+    newWin = baseWin + ((aggr - 50) * ((100 - baseWin) / 50) * 0.8); // Scale lift to max out near 100%
   } else {
-    // Parabolic drop-off as we price premium
-    newWin = (0.0256 * Math.pow(aggr, 2)) + 10; // Floors around 10%
+    newWin = baseWin - ((50 - aggr) * (baseWin / 50) * 0.8); // Scale drop linearly/quadratically
+    newWin = Math.max(10, newWin);
   }
 
   document.getElementById('pval-1').textContent = 'AED ' + newGmv.toFixed(1) + 'M';
@@ -853,7 +862,7 @@ window.originalLabSliderCalc = function() {
   document.getElementById('pval-2').textContent = newMargin.toFixed(1) + '%';
   document.getElementById('pval-2').className = `lab-proj-value ${newMargin > baseMargin ? 'positive' : 'negative'}`;
   document.getElementById('pval-3').textContent = newWin.toFixed(0) + '%';
-  document.getElementById('pval-3').className = `lab-proj-value ${newWin > 74 ? 'positive' : 'negative'}`;
+  document.getElementById('pval-3').className = `lab-proj-value ${newWin > baseWin ? 'positive' : 'negative'}`;
 }
 
 function switchHubTab(tabName) {
