@@ -94,10 +94,9 @@ To protect the Noon brand and P\&L, the SPO includes mandatory logic gates:
 
 ## 🛠️ Prototype Interaction
 
-The Antigravity prototype demonstrates two distinct "Stress Tests":
+The Antigravity prototype demonstrates simulation testing using 1 SKU:
 
 1.  **Electronics (iPhone 15):** Demonstrates **Market Synchronicity** and High-Frequency competition logic.
-2.  **FMCG (Tide 9kg):** Demonstrates **Adaptive Elasticity** and High-Volume turnover logic.
 
 > [\!NOTE]
 > All data within this prototype is **DUMMY DATA** intended for architectural demonstration. Real-world implementation requires integration with the Noon Data Lake and Scraper APIs.
