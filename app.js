@@ -976,9 +976,22 @@ function openDrawer(sku) {
   
   document.getElementById('drawer-sku-name').textContent = sku.product;
   document.getElementById('drawer-sku-id').innerHTML = `
-    <div style="display:flex; justify-content:space-between; width:100%; margin-top:5px; font-weight:normal; font-size:12px;">
-      <span>ID: ${sku.id} | Category: ${sku.cat}</span>
-      <span><strong>Live:</strong> AED ${sku.ourPrice.toLocaleString()} | <strong>Est. Cost:</strong> AED ${cogs.toLocaleString()}</span>
+    <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-top:12px; font-weight:normal;">
+      <div style="display:flex; gap:16px; color:var(--text-secondary); font-size:13px; font-family:var(--font-mono);">
+        <span><strong>ID:</strong> ${sku.id}</span>
+        <span><strong>CAT:</strong> ${sku.cat}</span>
+      </div>
+      <div style="display:flex; gap:12px; background:rgba(0,0,0,0.03); padding:6px 12px; border-radius:6px; border: 1px solid var(--border);">
+        <div style="display:flex; flex-direction:column; line-height:1.2;">
+          <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600;">Live Price</span>
+          <span style="font-size:13px; font-weight:700; color:var(--text-primary);">AED ${sku.ourPrice.toLocaleString()}</span>
+        </div>
+        <div style="width:1px; background:var(--border);"></div>
+        <div style="display:flex; flex-direction:column; line-height:1.2;">
+          <span style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; font-weight:600;">Est COGS</span>
+          <span style="font-size:13px; font-weight:700; color:var(--text-primary);">AED ${cogs.toLocaleString()}</span>
+        </div>
+      </div>
     </div>
   `;
   
@@ -1085,10 +1098,28 @@ function saveOverride() {
   sku.aiPrice = newPrice;
   sku.strat = 'none'; // Reverts visually to indicate manual control
   
-  showToast(`✅ Manual price AED ${newPrice.toLocaleString()} saved for ${sku.product}`);
+  showToast(`✅ Manual price AED ${newPrice.toLocaleString()} configured for ${sku.product}`);
   closeDrawer();
   
   // Refresh canvas and SKU list tables globally
+  renderSKUTable(SKU_DATA);
+  renderCanvasSkus();
+}
+
+function pushToLive() {
+  const sku = SKU_DATA[STATE.openSkuIndex];
+  if (!sku) return;
+  
+  // Physically push the generated target AI Price over to the live website price state
+  sku.ourPrice = sku.aiPrice;
+  
+  // Clear any overrides logic so it syncs cleanly 
+  delete STATE.overrideValues[sku.id];
+  sku.originalAiPrice = sku.aiPrice;
+
+  showToast(`🚀 Immediate Action: New price AED ${sku.ourPrice.toLocaleString()} deployed to live website for ${sku.product}!`);
+  closeDrawer();
+  
   renderSKUTable(SKU_DATA);
   renderCanvasSkus();
 }

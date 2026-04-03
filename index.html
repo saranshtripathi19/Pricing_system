@@ -759,9 +759,10 @@
             <span class="override-label">New Price:</span>
             <span class="override-price" id="override-price-display">—</span>
           </div>
-          <div class="override-actions">
-            <button class="btn-ghost" onclick="resetOverride()">Reset to AI Price</button>
-            <button class="btn-primary" onclick="saveOverride()">Save Override</button>
+          <div class="override-actions" style="display:flex; flex-wrap:wrap; gap:8px;">
+            <button class="btn-ghost" onclick="resetOverride()" style="flex:1; min-width:120px;">Reset to AI Price</button>
+            <button class="btn-ghost" onclick="saveOverride()" style="flex:1; min-width:120px; border:1px solid var(--border);">Save Override</button>
+            <button class="btn-primary" onclick="pushToLive()" style="flex:1; min-width:120px; background:#111; color:#FFE000; border:1px solid #111;">Push to Live Site</button>
           </div>
         </div>
       </div>
